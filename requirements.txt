@@ -1,0 +1,5 @@
+openai>=1.40,<3
+huggingface_hub>=0.30
+transformers>=4.45,<6
+datasets>=2.20,<5
+pytest>=8,<10

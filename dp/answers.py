@@ -46,7 +46,9 @@ def extract_aime_answer(text):
             return answer
     # Only unambiguous 'final answer' phrases, not arbitrary last numbers.
     matches = list(re.finditer(
-        r"(?:final\s+answer|answer\s+is|最终答案|答案(?:是|为)?)\s*[:：=]?\s*\$?\s*(\d{1,3})(?!\d)",
+        r"(?:\bfinal\s+answer(?:\s+is)?\b|\banswer\s+is\b|最终答案(?:是|为)?|答案(?:是|为)?)"
+        r"\s*[:：=]?\s*(\$\s*\+?\d{1,3}\s*\$|\+?\d{1,3})"
+        r"(?=[^\S\r\n]*(?:$|[\r\n。]|\.(?!\d)))",
         text, flags=re.IGNORECASE
     ))
     return normalize_aime(matches[-1].group(1)) if matches else None

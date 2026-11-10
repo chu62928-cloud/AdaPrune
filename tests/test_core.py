@@ -9,6 +9,11 @@ def test_answer_extraction():
     assert extract_aime_answer("Working: 1,2,3. Hence \\boxed{042}.") == "42"
     assert extract_aime_answer("\\boxed{5} but revised \\boxed{009}") == "9"
     assert extract_aime_answer("Final answer: 123") == "123"
+    assert extract_aime_answer("The final answer is $042$.") == "42"
+    assert extract_aime_answer("最终答案是042。") == "42"
+    assert extract_aime_answer("Final answer: 12.5") is None
+    assert extract_aime_answer("Final answer: 12/17") is None
+    assert extract_aime_answer("Final answer: 1,234") is None
     assert extract_aime_answer("I considered 12 and 19") is None
     assert normalize_aime("1234") is None
 

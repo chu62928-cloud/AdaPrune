@@ -23,10 +23,10 @@ ps -o user,pid,etime,args -p 760405,760408,760409,760410,760411,760412
 
 ## B. 推荐目录
 
-将解压后的本项目放在 `/root/autodl-tmp/dynamic_pruning_autodl`，不要放系统盘。
+AutoDL 工作目录为 `/root/autodl-tmp/AdaPrune`。恢复已有复现实验时，先查看 `PROJECT_MEMORY.md` 和服务器上的 `outputs/`。
 
 ```bash
-cd /root/autodl-tmp/dynamic_pruning_autodl
+cd /root/autodl-tmp/AdaPrune
 pwd
 ls dp scripts tests
 ```
@@ -38,16 +38,19 @@ ls dp scripts tests
 **强烈建议创建独立虚拟环境。** 已有 torch 2.7.0+cu128 是基础环境中的版本；安装新版 vLLM 可能改变 PyTorch 版本，因此不应在基础环境直接覆盖。
 
 ```bash
-cd /root/autodl-tmp/dynamic_pruning_autodl
+cd /root/autodl-tmp/AdaPrune
 export OMP_NUM_THREADS=4
+mkdir -p outputs
+python -m venv outputs/uv-bootstrap
+source outputs/uv-bootstrap/bin/activate
 bash scripts/setup_autodl.sh
 source .venv/bin/activate
 python -m pytest -q
 ```
 
-脚本执行的是：安装 `uv`、创建 Python 3.12 虚拟环境、在虚拟环境安装 vLLM 和 Python 依赖。vLLM 会选择与其轮子兼容的 CUDA/PyTorch 组合；请不要强行将环境重新 pin 回基础环境的 torch 2.7.0。
+引导环境用于安装 `uv`，推理依赖安装到单独的 Python 3.12 环境 `.venv`。安装中断后可以再次运行脚本。vLLM 会选择与其轮子兼容的 CUDA 和 PyTorch 组合。
 
-若 `uv` 不可用，可先运行 `python -m pip install -U uv`。安装过程中需要网络，若超时优先检查 AutoDL 机器联网情况。安装完成记录版本：
+如果 PyPI 下载缓慢，可在运行安装脚本前为当前会话设置 `PIP_INDEX_URL` 和 `UV_DEFAULT_INDEX`，例如 `https://mirrors.aliyun.com/pypi/simple/`。安装完成后记录版本：
 
 ```bash
 python - <<'PY'
@@ -56,7 +59,7 @@ print('torch:', torch.__version__, 'cuda:', torch.version.cuda)
 print('vllm:', vllm.__version__)
 print('gpu:', torch.cuda.get_device_name(0))
 PY
-python -m pip freeze > outputs/installed_packages.txt
+uv pip freeze > outputs/installed_packages.txt
 ```
 
 ## D. 模型下载
@@ -73,20 +76,22 @@ du -sh /root/autodl-tmp/models/Qwen2.5-Math-7B-Instruct
 如果 Hugging Face 不通，Qwen 官方文档推荐中国大陆用户考虑 ModelScope；可以尝试：
 
 ```bash
-bash scripts/download_model_modelscope.sh
+(source outputs/uv-bootstrap/bin/activate && bash scripts/download_model_modelscope.sh)
 ```
 
 替代下载仅在对应的 ModelScope 仓库可访问时有效。下载后必须检查 `config.json`、Tokenizer 文件和 `*.safetensors` 均存在，不应把下载失败的空目录当作模型。一次只选择一个下载渠道，避免重复占用磁盘空间。
 
 ## E. 数据集下载
 
-公开数据集：<https://huggingface.co/datasets/AI-MO/aimo-validation-aime>，共 90 道 AIME 2022–2024 问题；字段为 `id`、`problem`、`solution`、`answer`、`url`。
+公开数据集共 90 道 AIME 2022–2024 题目，原标识 `AI-MO/aimo-validation-aime` 重定向到 [project-numina/aimo-validation-aime](https://huggingface.co/datasets/project-numina/aimo-validation-aime)。
 
 ```bash
 python -m dp.prepare_data --outdir data
 wc -l data/*.jsonl
 head -n 1 data/aime_dev.jsonl | cut -c 1-200
 ```
+
+如果 AutoDL 直连 Hugging Face 超时，可以在当前会话导出 `HF_ENDPOINT=https://hf-mirror.com` 和 `HF_HUB_DISABLE_XET=1`。先验证数据文件的哈希和年份切分，再运行冒烟测试。
 
 预期：`data/aime_dev.jsonl` 60 道（2022–2023），`data/aime_2024.jsonl` 30 道（2024）。
 
@@ -102,7 +107,7 @@ head -n 1 data/aime_dev.jsonl | cut -c 1-200
 确保显卡已空闲或预留足够显存。
 
 ```bash
-cd /root/autodl-tmp/dynamic_pruning_autodl
+cd /root/autodl-tmp/AdaPrune
 source .venv/bin/activate
 export OMP_NUM_THREADS=4
 export GPU_MEMORY_UTILIZATION=0.65
@@ -118,7 +123,7 @@ bash scripts/start_vllm.sh 2>&1 | tee outputs/vllm.log
 ## G. 检查服务器（终端 B）
 
 ```bash
-cd /root/autodl-tmp/dynamic_pruning_autodl
+cd /root/autodl-tmp/AdaPrune
 source .venv/bin/activate
 bash scripts/check_server.sh
 ```

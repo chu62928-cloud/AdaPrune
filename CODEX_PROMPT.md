@@ -8,7 +8,7 @@
 - NVIDIA Driver 595.71.05；基础环境 Python 的 PyTorch 2.7.0+cu128；驱动报告 CUDA 13.2。
 - `/root/autodl-tmp` 有 271GB 可用空间，整个磁盘占用 93%。
 - 上次 `nvidia-smi` 有 6 个未知 Python 进程、GPU 使用率 98%、显存约 6.4GB 已被占用。**任何时候不要未经确认直接 kill 进程或删除原有文件。**
-- 项目目录设为 `/root/autodl-tmp/dynamic_pruning_autodl`，模型目录为 `/root/autodl-tmp/models/Qwen2.5-Math-7B-Instruct`。
+- 项目目录设为 `/root/autodl-tmp/AdaPrune`，模型目录为 `/root/autodl-tmp/models/Qwen2.5-Math-7B-Instruct`。
 
 ## 第一阶段任务（按顺序执行）
 

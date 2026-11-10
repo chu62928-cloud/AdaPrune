@@ -9,7 +9,9 @@ export TMPDIR="${TMPDIR:-/root/autodl-tmp/tmp}"
 mkdir -p "$HF_HOME" "$UV_CACHE_DIR" "$TMPDIR"
 
 python -m pip install -U uv
-uv venv --python 3.12 .venv
+if [[ ! -x .venv/bin/python ]]; then
+  uv venv --python 3.12 .venv
+fi
 source .venv/bin/activate
 uv pip install vllm --torch-backend=auto
 uv pip install -r requirements.txt
